@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FinanceCard } from "@/components/FinanceCard";
 import { QuickAction } from "@/components/QuickAction";
 import { GoalCard } from "@/components/GoalCard";
+import { DailyMonthlyStats } from "@/components/DailyMonthlyStats";
 import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
@@ -58,6 +59,37 @@ const Index = () => {
 
   const netProfit = totalGains - totalExpenses;
 
+  // Cálculos para hoje
+  const today = new Date();
+  const todayTransactions = transactions.filter(t => {
+    const transactionDate = new Date(t.date);
+    return transactionDate.toDateString() === today.toDateString();
+  });
+
+  const todayGains = todayTransactions
+    .filter(t => t.type === "gain")
+    .reduce((sum, t) => sum + t.value, 0);
+
+  const todayExpenses = todayTransactions
+    .filter(t => t.type === "expense")
+    .reduce((sum, t) => sum + t.value, 0);
+
+  // Cálculos para este mês
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const monthTransactions = transactions.filter(t => {
+    const transactionDate = new Date(t.date);
+    return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+  });
+
+  const monthGains = monthTransactions
+    .filter(t => t.type === "gain")
+    .reduce((sum, t) => sum + t.value, 0);
+
+  const monthExpenses = monthTransactions
+    .filter(t => t.type === "expense")
+    .reduce((sum, t) => sum + t.value, 0);
+
   return (
     <div className="min-h-screen bg-background p-4 space-y-6">
       {/* Header */}
@@ -69,6 +101,14 @@ const Index = () => {
           Controle financeiro para motoboys
         </p>
       </div>
+
+      {/* Estatísticas Diárias e Mensais */}
+      <DailyMonthlyStats
+        todayGains={todayGains}
+        monthGains={monthGains}
+        todayExpenses={todayExpenses}
+        monthExpenses={monthExpenses}
+      />
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
