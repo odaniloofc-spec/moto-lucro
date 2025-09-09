@@ -13,6 +13,11 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        'bebas': ['Bebas Neue', 'cursive'],
+        'orbitron': ['Orbitron', 'monospace'],
+        'montserrat': ['Montserrat', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -56,6 +61,13 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        finance: {
+          gain: "hsl(var(--finance-gain))",
+          expense: "hsl(var(--finance-expense))",
+          profit: "hsl(var(--finance-profit))",
+          card: "hsl(var(--finance-bg-card))",
+          secondary: "hsl(var(--finance-bg-secondary))",
         },
       },
       borderRadius: {
