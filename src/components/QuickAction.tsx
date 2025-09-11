@@ -2,25 +2,28 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 
 interface QuickActionProps {
   title: string;
   type: "gain" | "expense";
   icon: string;
-  onAdd: (value: number, category?: string) => void;
+  onAdd: (value: number, category?: string, company?: string) => void;
   categories?: string[];
+  companies?: string[];
 }
 
-export const QuickAction = ({ title, type, icon, onAdd, categories }: QuickActionProps) => {
+export const QuickAction = ({ title, type, icon, onAdd, categories, companies }: QuickActionProps) => {
   const [value, setValue] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(categories?.[0] || "");
+  const [selectedCompany, setSelectedCompany] = useState(companies?.[0] || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numValue = parseFloat(value);
     if (numValue > 0) {
-      onAdd(numValue, selectedCategory);
+      onAdd(numValue, selectedCategory, selectedCompany);
       setValue("");
     }
   };
@@ -35,22 +38,44 @@ export const QuickAction = ({ title, type, icon, onAdd, categories }: QuickActio
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {categories && (
-            <div className="grid grid-cols-3 gap-2">
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  type="button"
-                  variant={selectedCategory === category ? "neon" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category)}
-                  className="text-xs"
-                >
-                  {category}
-                </Button>
-              ))}
+          {companies && (
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground font-montserrat">Empresa:</label>
+              <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                <SelectTrigger className="bg-background/50 border-border text-foreground">
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company} value={company}>
+                      {company}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
+          
+          {categories && (
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground font-montserrat">Categoria:</label>
+              <div className="grid grid-cols-3 gap-2">
+                {categories.map((category) => (
+                  <Button
+                    key={category}
+                    type="button"
+                    variant={selectedCategory === category ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className="text-xs"
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="flex gap-2">
             <Input
               type="number"
@@ -63,7 +88,7 @@ export const QuickAction = ({ title, type, icon, onAdd, categories }: QuickActio
             />
             <Button 
               type="submit" 
-              variant={type === "gain" ? "gain" : "expense"}
+              variant={type === "gain" ? "default" : "destructive"}
               size="icon"
               disabled={!value || parseFloat(value) <= 0}
             >

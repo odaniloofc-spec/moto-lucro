@@ -3,6 +3,7 @@ import { FinanceCard } from "@/components/FinanceCard";
 import { QuickAction } from "@/components/QuickAction";
 import { GoalCard } from "@/components/GoalCard";
 import { DailyMonthlyStats } from "@/components/DailyMonthlyStats";
+import { TransactionList } from "@/components/TransactionList";
 import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
@@ -10,6 +11,7 @@ interface Transaction {
   value: number;
   type: "gain" | "expense";
   category?: string;
+  company?: string;
   date: Date;
 }
 
@@ -20,7 +22,7 @@ const Index = () => {
 
   // Carregar dados do localStorage na inicialização
   useEffect(() => {
-    const saved = localStorage.getItem("motofinance-transactions");
+    const saved = localStorage.getItem("motolucro-transactions");
     if (saved) {
       const parsed = JSON.parse(saved);
       setTransactions(parsed.map((t: any) => ({ ...t, date: new Date(t.date) })));
@@ -29,24 +31,37 @@ const Index = () => {
 
   // Salvar no localStorage sempre que transactions mudar
   useEffect(() => {
-    localStorage.setItem("motofinance-transactions", JSON.stringify(transactions));
+    localStorage.setItem("motolucro-transactions", JSON.stringify(transactions));
   }, [transactions]);
 
-  const addTransaction = (value: number, type: "gain" | "expense", category?: string) => {
+  const addTransaction = (value: number, type: "gain" | "expense", category?: string, company?: string) => {
     const newTransaction: Transaction = {
       id: Date.now().toString(),
       value,
       type,
       category,
+      company,
       date: new Date(),
     };
     
     setTransactions(prev => [newTransaction, ...prev]);
     
     toast({
-      title: type === "gain" ? "Corrida adicionada!" : "Despesa registrada!",
-      description: `${type === "gain" ? "Ganho" : "Gasto"} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} ${category ? `(${category})` : ""}`,
+      title: type === "gain" ? "Lucro adicionado!" : "Despesa registrada!",
+      description: `${type === "gain" ? "Ganho" : "Gasto"} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} ${company ? `(${company})` : ""} ${category ? `- ${category}` : ""}`,
     });
+  };
+
+  const editTransaction = (id: string, value: number, category?: string, company?: string) => {
+    setTransactions(prev => prev.map(t => 
+      t.id === id 
+        ? { ...t, value, category, company }
+        : t
+    ));
+  };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
   };
 
   const totalGains = transactions
@@ -95,7 +110,7 @@ const Index = () => {
       {/* Header */}
       <div className="text-center pt-4 pb-2">
         <h1 className="text-4xl font-orbitron font-bold text-foreground mb-2">
-          MOTO<span className="text-primary">FINANCE</span>
+          MOTO<span className="text-primary">LUCRO</span>
         </h1>
         <p className="text-muted-foreground font-montserrat">
           Controle financeiro para motoboys
@@ -135,10 +150,11 @@ const Index = () => {
       {/* Ações Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <QuickAction
-          title="Adicionar Corrida"
+          title="Adicionar Lucro"
           type="gain"
           icon="🏍️"
-          onAdd={(value) => addTransaction(value, "gain")}
+          onAdd={(value, category, company) => addTransaction(value, "gain", category, company)}
+          companies={["Uber", "99Pop", "iFood", "Rappi", "Outros"]}
         />
         <QuickAction
           title="Registrar Despesa"
@@ -155,44 +171,13 @@ const Index = () => {
         goalAmount={goalAmount}
       />
 
-      {/* Histórico Recente */}
+      {/* Histórico de Transações */}
       {transactions.length > 0 && (
-        <div className="bg-finance-card rounded-lg border border-border shadow-card p-4">
-          <h3 className="text-lg font-orbitron font-bold text-foreground mb-4">
-            Últimas Transações
-          </h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {transactions.slice(0, 10).map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex justify-between items-center p-3 bg-background/50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">
-                    {transaction.type === "gain" ? "💰" : "💸"}
-                  </span>
-                  <div>
-                    <p className="font-montserrat text-foreground">
-                      {transaction.type === "gain" ? "Corrida" : transaction.category}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {transaction.date.toLocaleString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-                <span className={`font-orbitron font-bold ${
-                  transaction.type === "gain" ? "text-finance-gain" : "text-finance-expense"
-                }`}>
-                  {transaction.type === "gain" ? "+" : "-"}
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL'
-                  }).format(transaction.value)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <TransactionList
+          transactions={transactions}
+          onEdit={editTransaction}
+          onDelete={deleteTransaction}
+        />
       )}
     </div>
   );
