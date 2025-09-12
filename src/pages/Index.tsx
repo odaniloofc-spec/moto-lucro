@@ -4,6 +4,7 @@ import { QuickAction } from "@/components/QuickAction";
 import { GoalCard } from "@/components/GoalCard";
 import { DailyMonthlyStats } from "@/components/DailyMonthlyStats";
 import { TransactionList } from "@/components/TransactionList";
+import { TransactionModal } from "@/components/TransactionModal";
 import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
@@ -17,7 +18,9 @@ interface Transaction {
 
 const Index = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [goalAmount] = useState(300); // Meta fixa de R$ 300
+  const [goalAmount, setGoalAmount] = useState(300); // Meta editável
+  const [isGainsModalOpen, setIsGainsModalOpen] = useState(false);
+  const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
   const { toast } = useToast();
 
   // Carregar dados do localStorage na inicialização
@@ -27,12 +30,22 @@ const Index = () => {
       const parsed = JSON.parse(saved);
       setTransactions(parsed.map((t: any) => ({ ...t, date: new Date(t.date) })));
     }
+    
+    const savedGoal = localStorage.getItem("motolucro-goal");
+    if (savedGoal) {
+      setGoalAmount(parseFloat(savedGoal));
+    }
   }, []);
 
   // Salvar no localStorage sempre que transactions mudar
   useEffect(() => {
     localStorage.setItem("motolucro-transactions", JSON.stringify(transactions));
   }, [transactions]);
+
+  // Salvar meta no localStorage
+  useEffect(() => {
+    localStorage.setItem("motolucro-goal", goalAmount.toString());
+  }, [goalAmount]);
 
   const addTransaction = (value: number, type: "gain" | "expense", category?: string, company?: string) => {
     const newTransaction: Transaction = {
@@ -62,6 +75,14 @@ const Index = () => {
 
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleGoalChange = (newGoal: number) => {
+    setGoalAmount(newGoal);
+    toast({
+      title: "Meta atualizada!",
+      description: `Nova meta definida: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(newGoal)}`,
+    });
   };
 
   const totalGains = transactions
@@ -132,12 +153,14 @@ const Index = () => {
           value={totalGains}
           type="gain"
           icon="💰"
+          onClick={() => setIsGainsModalOpen(true)}
         />
         <FinanceCard
           title="Despesas Totais"
           value={totalExpenses}
           type="expense"
           icon="💸"
+          onClick={() => setIsExpensesModalOpen(true)}
         />
         <FinanceCard
           title="Lucro Líquido"
@@ -169,6 +192,7 @@ const Index = () => {
       <GoalCard
         currentAmount={Math.max(0, netProfit)}
         goalAmount={goalAmount}
+        onGoalChange={handleGoalChange}
       />
 
       {/* Histórico de Transações */}
@@ -179,6 +203,23 @@ const Index = () => {
           onDelete={deleteTransaction}
         />
       )}
+
+      {/* Modais */}
+      <TransactionModal
+        isOpen={isGainsModalOpen}
+        onClose={() => setIsGainsModalOpen(false)}
+        transactions={transactions}
+        type="gain"
+        title="Histórico de Ganhos"
+      />
+      
+      <TransactionModal
+        isOpen={isExpensesModalOpen}
+        onClose={() => setIsExpensesModalOpen(false)}
+        transactions={transactions}
+        type="expense"
+        title="Histórico de Despesas"
+      />
     </div>
   );
 };

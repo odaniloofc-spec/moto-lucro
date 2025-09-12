@@ -7,9 +7,10 @@ interface FinanceCardProps {
   type: "gain" | "expense" | "profit";
   icon: string;
   className?: string;
+  onClick?: () => void;
 }
 
-export const FinanceCard = ({ title, value, type, icon, className }: FinanceCardProps) => {
+export const FinanceCard = ({ title, value, type, icon, className, onClick }: FinanceCardProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -44,11 +45,15 @@ export const FinanceCard = ({ title, value, type, icon, className }: FinanceCard
   };
 
   return (
-    <Card className={cn(
-      "bg-finance-card border-border transition-smooth hover:scale-105",
-      getBackgroundGlow(),
-      className
-    )}>
+    <Card 
+      className={cn(
+        "bg-finance-card border-border transition-smooth hover:scale-105",
+        getBackgroundGlow(),
+        onClick && "cursor-pointer hover:shadow-lg",
+        className
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-muted-foreground font-montserrat text-sm uppercase tracking-wide">

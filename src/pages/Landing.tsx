@@ -36,7 +36,7 @@ const Landing = () => {
     {
       name: "MVP Gratuito",
       price: "R$ 0",
-      originalPrice: "R$ 49,90",
+      originalPrice: "R$ 19,90",
       period: "para sempre",
       description: "Teste todas as funcionalidades",
       features: [
@@ -54,7 +54,7 @@ const Landing = () => {
     {
       name: "Futuro Pro",
       price: "R$ 0",
-      originalPrice: "R$ 99,90",
+      originalPrice: "R$ 49,90",
       period: "em breve",
       description: "Funcionalidades avançadas",
       features: [
@@ -72,7 +72,7 @@ const Landing = () => {
     {
       name: "Futuro Premium",
       price: "R$ 0",
-      originalPrice: "R$ 199,90",
+      originalPrice: "R$ 99,90",
       period: "em breve",
       description: "Solução completa",
       features: [
@@ -93,7 +93,7 @@ const Landing = () => {
     {
       name: "João Silva",
       role: "Motoboy - São Paulo",
-      content: "O MotoFinance revolucionou meu controle financeiro. Agora sei exatamente quanto ganho por dia!",
+      content: "O MotoLucro revolucionou meu controle financeiro. Agora sei exatamente quanto ganho por dia!",
       rating: 5
     },
     {
@@ -199,7 +199,7 @@ const Landing = () => {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-orbitron font-bold text-foreground mb-4">
-              Por que escolher o MotoFinance?
+              Por que escolher o MotoLucro?
             </h2>
             <p className="text-xl text-muted-foreground font-montserrat">
               Ferramentas poderosas desenvolvidas especificamente para motoboys
