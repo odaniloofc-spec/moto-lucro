@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DatePickerComponent } from "@/components/ui/date-picker";
 import { Edit, Trash2, Calendar, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,12 +20,28 @@ interface TransactionListProps {
   transactions: Transaction[];
   onEdit: (id: string, value: number, category?: string, company?: string) => void;
   onDelete: (id: string) => void;
+  dateFilter?: "all" | "week" | "month" | "custom";
+  onDateFilterChange?: (filter: "all" | "week" | "month" | "custom") => void;
+  startDate?: Date | null;
+  onStartDateChange?: (date: Date | null) => void;
+  endDate?: Date | null;
+  onEndDateChange?: (date: Date | null) => void;
 }
 
-export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionListProps) => {
-  const [filter, setFilter] = useState<"all" | "week" | "month" | "custom">("month"); // Fixo no mês atual
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+export const TransactionList = ({ 
+  transactions, 
+  onEdit, 
+  onDelete,
+  dateFilter = "month",
+  onDateFilterChange,
+  startDate: propStartDate,
+  onStartDateChange,
+  endDate: propEndDate,
+  onEndDateChange
+}: TransactionListProps) => {
+  const [filter, setFilter] = useState<"all" | "week" | "month" | "custom">(dateFilter);
+  const [startDate, setStartDate] = useState<Date | null>(propStartDate || null);
+  const [endDate, setEndDate] = useState<Date | null>(propEndDate || null);
   const [typeFilter, setTypeFilter] = useState<"all" | "gain" | "expense">("all");
   const [subtypeFilter, setSubtypeFilter] = useState<string>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -167,20 +184,62 @@ export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionL
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-orbitron font-bold text-foreground flex items-center gap-2">
               <Calendar className="w-5 h-5 text-muted-foreground" />
-              Histórico de Transações - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              Histórico de Transações
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setTypeFilter("all");
-                setSubtypeFilter("all");
-              }}
-              className="h-8 px-3"
-            >
-              <X className="w-4 h-4 mr-1" />
-              Limpar Filtros
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select value={filter} onValueChange={(value: "all" | "week" | "month" | "custom") => {
+                setFilter(value);
+                onDateFilterChange?.(value);
+              }}>
+                <SelectTrigger className="w-32 bg-background/50 border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="week">Semanal</SelectItem>
+                  <SelectItem value="month">Mensal</SelectItem>
+                  <SelectItem value="custom">Intervalo</SelectItem>
+                </SelectContent>
+              </Select>
+              {filter === "custom" && (
+                <div className="flex items-center gap-2">
+                  <DatePickerComponent
+                    selected={startDate}
+                    onChange={(date) => {
+                      setStartDate(date);
+                      onStartDateChange?.(date);
+                    }}
+                    placeholder="Data inicial"
+                    className="w-36 bg-background/50 border-border text-foreground"
+                  />
+                  <span className="text-muted-foreground text-xs">até</span>
+                  <DatePickerComponent
+                    selected={endDate}
+                    onChange={(date) => {
+                      setEndDate(date);
+                      onEndDateChange?.(date);
+                    }}
+                    placeholder="Data final"
+                    className="w-36 bg-background/50 border-border text-foreground"
+                  />
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFilter("month");
+                  setStartDate(null);
+                  setEndDate(null);
+                  setTypeFilter("all");
+                  setSubtypeFilter("all");
+                }}
+                className="h-8 px-3"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+            </div>
           </div>
 
           {/* Cards de Filtro por Tipo */}

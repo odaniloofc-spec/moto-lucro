@@ -12,6 +12,9 @@ interface Transaction {
 
 interface MonthlyChartProps {
   transactions: Transaction[];
+  dateFilter?: "all" | "week" | "month" | "custom";
+  startDate?: Date | null;
+  endDate?: Date | null;
 }
 
 interface ChartData {
@@ -22,32 +25,67 @@ interface ChartData {
   lucro: number;
 }
 
-export const MonthlyChart = ({ transactions }: MonthlyChartProps) => {
+export const MonthlyChart = ({ transactions, dateFilter = "month", startDate, endDate }: MonthlyChartProps) => {
   const getChartData = (): ChartData[] => {
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    let filteredTransactions = [...transactions];
     
-    // Filtrar transações do mês atual
-    const monthTransactions = transactions.filter(t => {
-      const transactionDate = new Date(t.date);
-      return transactionDate.getMonth() === currentMonth && 
-             transactionDate.getFullYear() === currentYear;
-    });
+    // Aplicar filtro de data
+    switch (dateFilter) {
+      case "week":
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= weekAgo);
+        break;
+      case "month":
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        filteredTransactions = filteredTransactions.filter(t => {
+          const transactionDate = new Date(t.date);
+          return transactionDate.getMonth() === currentMonth && 
+                 transactionDate.getFullYear() === currentYear;
+        });
+        break;
+      case "custom":
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          filteredTransactions = filteredTransactions.filter(t => {
+            const transactionDate = new Date(t.date);
+            return transactionDate >= start && transactionDate <= end;
+          });
+        }
+        break;
+    }
 
-    // Criar array com todos os dias do mês
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    // Determinar o período para o gráfico
+    let startPeriod: Date, endPeriod: Date;
+    
+    if (dateFilter === "custom" && startDate && endDate) {
+      startPeriod = new Date(startDate);
+      endPeriod = new Date(endDate);
+    } else if (dateFilter === "week") {
+      endPeriod = new Date(now);
+      startPeriod = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else {
+      // Mês atual
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      startPeriod = new Date(currentYear, currentMonth, 1);
+      endPeriod = new Date(currentYear, currentMonth + 1, 0);
+    }
+
     const chartData: ChartData[] = [];
+    const currentDate = new Date(startPeriod);
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-      const dayLabel = `${day}/${(currentMonth + 1).toString().padStart(2, '0')}`;
+    while (currentDate <= endPeriod) {
+      const dayOfWeek = currentDate.toLocaleDateString('pt-BR', { weekday: 'short' });
+      const dayLabel = `${currentDate.getDate()}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
 
       // Filtrar transações do dia
-      const dayTransactions = monthTransactions.filter(t => {
+      const dayTransactions = filteredTransactions.filter(t => {
         const transactionDate = new Date(t.date);
-        return transactionDate.getDate() === day;
+        return transactionDate.toDateString() === currentDate.toDateString();
       });
 
       // Calcular totais do dia
@@ -68,6 +106,8 @@ export const MonthlyChart = ({ transactions }: MonthlyChartProps) => {
         saidas,
         lucro
       });
+
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     return chartData;

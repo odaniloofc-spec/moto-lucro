@@ -22,6 +22,9 @@ const Index = () => {
   const [goalAmount, setGoalAmount] = useState(300); // Meta editável
   const [isGainsModalOpen, setIsGainsModalOpen] = useState(false);
   const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState<"all" | "week" | "month" | "custom">("month");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const { toast } = useToast();
 
   // Carregar dados do localStorage na inicialização
@@ -202,12 +205,23 @@ const Index = () => {
           transactions={transactions}
           onEdit={editTransaction}
           onDelete={deleteTransaction}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+          startDate={startDate}
+          onStartDateChange={setStartDate}
+          endDate={endDate}
+          onEndDateChange={setEndDate}
         />
       )}
 
       {/* Gráfico de Evolução Mensal */}
       {transactions.length > 0 && (
-        <MonthlyChart transactions={transactions} />
+        <MonthlyChart 
+          transactions={transactions} 
+          dateFilter={dateFilter}
+          startDate={startDate}
+          endDate={endDate}
+        />
       )}
 
       {/* Modais */}
