@@ -5,6 +5,7 @@ import { GoalCard } from "@/components/GoalCard";
 import { DailyMonthlyStats } from "@/components/DailyMonthlyStats";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionModal } from "@/components/TransactionModal";
+import { MonthlyChart } from "@/components/MonthlyChart";
 import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
@@ -177,7 +178,7 @@ const Index = () => {
           type="gain"
           icon="🏍️"
           onAdd={(value, category, company) => addTransaction(value, "gain", category, company)}
-          companies={["Uber", "99Pop", "iFood", "Rappi", "Outros"]}
+          companies={["Uber Moto", "99 Moto", "iFood", "Rappi", "Outros"]}
         />
         <QuickAction
           title="Registrar Despesa"
@@ -202,6 +203,11 @@ const Index = () => {
           onEdit={editTransaction}
           onDelete={deleteTransaction}
         />
+      )}
+
+      {/* Gráfico de Evolução Mensal */}
+      {transactions.length > 0 && (
+        <MonthlyChart transactions={transactions} />
       )}
 
       {/* Modais */}

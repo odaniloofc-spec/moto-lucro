@@ -22,7 +22,7 @@ interface TransactionListProps {
 }
 
 export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionListProps) => {
-  const [filter, setFilter] = useState<"all" | "week" | "month" | "custom">("all");
+  const [filter, setFilter] = useState<"all" | "week" | "month" | "custom">("month"); // Fixo no mês atual
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "gain" | "expense">("all");
@@ -137,6 +137,27 @@ export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionL
     setSubtypeFilter("all"); // Reset subtipo quando muda o tipo
   };
 
+  const getTotals = () => {
+    const filtered = getFilteredTransactions();
+    const entradas = filtered.filter(t => t.type === "gain");
+    const saidas = filtered.filter(t => t.type === "expense");
+    
+    return {
+      entradas: {
+        quantidade: entradas.length,
+        valor: entradas.reduce((sum, t) => sum + t.value, 0)
+      },
+      saidas: {
+        quantidade: saidas.length,
+        valor: saidas.reduce((sum, t) => sum + t.value, 0)
+      },
+      total: {
+        quantidade: filtered.length,
+        valor: filtered.reduce((sum, t) => sum + (t.type === "gain" ? t.value : -t.value), 0)
+      }
+    };
+  };
+
   const filteredTransactions = getFilteredTransactions();
 
   return (
@@ -144,56 +165,22 @@ export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionL
       <CardHeader>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-orbitron font-bold text-foreground">
-              Histórico de Transações
+            <CardTitle className="text-lg font-orbitron font-bold text-foreground flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+              Histórico de Transações - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <Select value={filter} onValueChange={(value: "all" | "week" | "month" | "custom") => setFilter(value)}>
-                <SelectTrigger className="w-32 bg-background/50 border-border text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="week">Semanal</SelectItem>
-                  <SelectItem value="month">Mensal</SelectItem>
-                  <SelectItem value="custom">Intervalo de datas</SelectItem>
-                </SelectContent>
-              </Select>
-              {filter === "custom" && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-32 bg-background/50 border-border text-foreground"
-                    placeholder="Início"
-                  />
-                  <span className="text-muted-foreground text-xs">até</span>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-32 bg-background/50 border-border text-foreground"
-                    placeholder="Fim"
-                  />
-                </div>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilter("all");
-                  setStartDate("");
-                  setEndDate("");
-                  setTypeFilter("all");
-                  setSubtypeFilter("all");
-                }}
-                className="h-8 w-8 p-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTypeFilter("all");
+                setSubtypeFilter("all");
+              }}
+              className="h-8 px-3"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Limpar Filtros
+            </Button>
           </div>
 
           {/* Cards de Filtro por Tipo */}
@@ -346,6 +333,53 @@ export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionL
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Linha de Total */}
+        {filteredTransactions.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-finance-gain/10 border border-finance-gain/20 rounded-lg">
+                <p className="text-sm text-muted-foreground font-montserrat">Entradas</p>
+                <p className="text-lg font-orbitron font-bold text-finance-gain">
+                  {getTotals().entradas.quantidade}
+                </p>
+                <p className="text-sm font-montserrat text-finance-gain">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getTotals().entradas.valor)}
+                </p>
+              </div>
+              
+              <div className="text-center p-3 bg-finance-expense/10 border border-finance-expense/20 rounded-lg">
+                <p className="text-sm text-muted-foreground font-montserrat">Saídas</p>
+                <p className="text-lg font-orbitron font-bold text-finance-expense">
+                  {getTotals().saidas.quantidade}
+                </p>
+                <p className="text-sm font-montserrat text-finance-expense">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getTotals().saidas.valor)}
+                </p>
+              </div>
+              
+              <div className="text-center p-3 bg-finance-profit/10 border border-finance-profit/20 rounded-lg shadow-neon">
+                <p className="text-sm text-muted-foreground font-montserrat">Lucro</p>
+                <p className="text-lg font-orbitron font-bold text-finance-profit">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getTotals().total.valor)}
+                </p>
+                <p className="text-xs font-montserrat text-muted-foreground">
+                  {getTotals().total.quantidade} transações
+                </p>
+              </div>
+              
+              <div className="text-center p-3 bg-background/50 border border-border/50 rounded-lg">
+                <p className="text-sm text-muted-foreground font-montserrat">Total</p>
+                <p className="text-lg font-orbitron font-bold text-foreground">
+                  {getTotals().total.quantidade}
+                </p>
+                <p className="text-xs font-montserrat text-muted-foreground">
+                  transações
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>

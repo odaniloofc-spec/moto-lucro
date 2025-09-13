@@ -45,7 +45,7 @@ const Landing = () => {
         "Relatórios detalhados",
         "Metas personalizadas",
         "Filtros por data",
-        "Integração com apps (Uber, 99Pop, iFood)"
+        "Integração com apps (Uber Moto, 99 Moto, iFood)"
       ],
       cta: "Começar Grátis",
       popular: true,
