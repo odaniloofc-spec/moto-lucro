@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FinanceCard } from "@/components/FinanceCard";
 import { QuickAction } from "@/components/QuickAction";
 import { GoalCard } from "@/components/GoalCard";
@@ -7,86 +8,52 @@ import { TransactionList } from "@/components/TransactionList";
 import { TransactionModal } from "@/components/TransactionModal";
 import { MonthlyChart } from "@/components/MonthlyChart";
 import { useToast } from "@/hooks/use-toast";
-
-interface Transaction {
-  id: string;
-  value: number;
-  type: "gain" | "expense";
-  category?: string;
-  company?: string;
-  date: Date;
-}
+import { useAuth } from "@/hooks/useAuth";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useUserGoal } from "@/hooks/useUserGoal";
+import { LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [goalAmount, setGoalAmount] = useState(300); // Meta editável
   const [isGainsModalOpen, setIsGainsModalOpen] = useState(false);
   const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<"all" | "week" | "month" | "custom">("month");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  
+  const { user, signOut } = useAuth();
+  const { transactions, loading: transactionsLoading, addTransaction, editTransaction, deleteTransaction } = useTransactions();
+  const { goalAmount, loading: goalLoading, updateGoal } = useUserGoal();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  // Carregar dados do localStorage na inicialização
-  useEffect(() => {
-    const saved = localStorage.getItem("motolucro-transactions");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setTransactions(parsed.map((t: any) => ({ ...t, date: new Date(t.date) })));
-    }
-    
-    const savedGoal = localStorage.getItem("motolucro-goal");
-    if (savedGoal) {
-      setGoalAmount(parseFloat(savedGoal));
-    }
-  }, []);
+  // Removido: proteção de rota agora é feita pelo ProtectedRoute
 
-  // Salvar no localStorage sempre que transactions mudar
-  useEffect(() => {
-    localStorage.setItem("motolucro-transactions", JSON.stringify(transactions));
-  }, [transactions]);
-
-  // Salvar meta no localStorage
-  useEffect(() => {
-    localStorage.setItem("motolucro-goal", goalAmount.toString());
-  }, [goalAmount]);
-
-  const addTransaction = (value: number, type: "gain" | "expense", category?: string, company?: string) => {
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
+  const handleAddTransaction = async (value: number, type: "gain" | "expense", category?: string, company?: string) => {
+    await addTransaction({
       value,
       type,
       category,
       company,
       date: new Date(),
-    };
-    
-    setTransactions(prev => [newTransaction, ...prev]);
-    
-    toast({
-      title: type === "gain" ? "Lucro adicionado!" : "Despesa registrada!",
-      description: `${type === "gain" ? "Ganho" : "Gasto"} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} ${company ? `(${company})` : ""} ${category ? `- ${category}` : ""}`,
     });
   };
 
-  const editTransaction = (id: string, value: number, category?: string, company?: string) => {
-    setTransactions(prev => prev.map(t => 
-      t.id === id 
-        ? { ...t, value, category, company }
-        : t
-    ));
+  const handleEditTransaction = async (id: string, value: number, category?: string, company?: string) => {
+    await editTransaction(id, { value, category, company });
   };
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+  const handleDeleteTransaction = async (id: string) => {
+    await deleteTransaction(id);
   };
 
-  const handleGoalChange = (newGoal: number) => {
-    setGoalAmount(newGoal);
-    toast({
-      title: "Meta atualizada!",
-      description: `Nova meta definida: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(newGoal)}`,
-    });
+  const handleGoalChange = async (newGoal: number) => {
+    await updateGoal(newGoal);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
   };
 
   const totalGains = transactions
@@ -130,16 +97,51 @@ const Index = () => {
     .filter(t => t.type === "expense")
     .reduce((sum, t) => sum + t.value, 0);
 
+  // Mostrar loading se ainda estiver carregando
+  if (transactionsLoading || goalLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground font-montserrat">Carregando seus dados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 space-y-6">
       {/* Header */}
-      <div className="text-center pt-4 pb-2">
-        <h1 className="text-4xl font-orbitron font-bold text-foreground mb-2">
-          MOTO<span className="text-primary">LUCRO</span>
-        </h1>
-        <p className="text-muted-foreground font-montserrat">
-          Controle financeiro para motoboys
-        </p>
+      <div className="flex justify-between items-center pt-4 pb-2">
+        <div className="text-center flex-1">
+          <h1 className="text-4xl font-orbitron font-bold text-foreground mb-2">
+            MOTO<span className="text-primary">LUCRO</span>
+          </h1>
+          <p className="text-muted-foreground font-montserrat">
+            Controle financeiro para motoboys
+          </p>
+        </div>
+        
+        {/* User Info & Logout */}
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-montserrat text-foreground">
+              Olá, <span className="font-semibold">{user?.user_metadata?.name || user?.email}</span>
+            </p>
+            <p className="text-xs text-muted-foreground font-montserrat">
+              {user?.email}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </Button>
+        </div>
       </div>
 
       {/* Estatísticas Diárias e Mensais */}
@@ -180,14 +182,14 @@ const Index = () => {
           title="Adicionar Lucro"
           type="gain"
           icon="🏍️"
-          onAdd={(value, category, company) => addTransaction(value, "gain", category, company)}
+          onAdd={(value, category, company) => handleAddTransaction(value, "gain", category, company)}
           companies={["Uber Moto", "99 Moto", "iFood", "Rappi", "Outros"]}
         />
         <QuickAction
           title="Registrar Despesa"
           type="expense"
           icon="🛠️"
-          onAdd={(value, category) => addTransaction(value, "expense", category)}
+          onAdd={(value, category) => handleAddTransaction(value, "expense", category)}
           categories={["Combustível", "Manutenção", "Outros"]}
         />
       </div>
@@ -203,8 +205,8 @@ const Index = () => {
       {transactions.length > 0 && (
         <TransactionList
           transactions={transactions}
-          onEdit={editTransaction}
-          onDelete={deleteTransaction}
+          onEdit={handleEditTransaction}
+          onDelete={handleDeleteTransaction}
           dateFilter={dateFilter}
           onDateFilterChange={setDateFilter}
           startDate={startDate}

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
@@ -11,32 +12,35 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { signIn, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Simular delay de login
-    setTimeout(() => {
-      // Login fixo: admin/admin
-      if (email === "admin" && password === "admin") {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao MotoLucro!",
-        });
+    // Validação básica
+    if (!email.trim() || !password.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await signIn(email, password);
+    
+    if (!error) {
+      console.log("Login bem-sucedido, redirecionando...");
+      // Pequeno delay para garantir que o estado foi atualizado
+      setTimeout(() => {
+        console.log("Navegando para /dashboard");
         navigate("/dashboard");
-      } else {
-        toast({
-          title: "Credenciais inválidas",
-          description: "Email ou senha incorretos. Tente novamente.",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+      }, 100);
+    } else {
+      console.log("Erro no login:", error);
+    }
   };
 
   return (
@@ -113,9 +117,9 @@ const Login = () => {
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-button transition-smooth"
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? (
+                {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     Entrando...
@@ -129,18 +133,15 @@ const Login = () => {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
+            {/* Info */}
             <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
               <h4 className="text-sm font-orbitron font-bold text-primary mb-2">
-                🚀 Credenciais de Demonstração
+                🔐 Autenticação Segura
               </h4>
-              <p className="text-xs text-muted-foreground font-montserrat mb-2">
-                Use estas credenciais para testar o sistema:
+              <p className="text-xs text-muted-foreground font-montserrat">
+                Use suas credenciais reais para acessar o sistema. 
+                Se você ainda não tem uma conta, clique em "Inscreva-se aqui" para criar uma.
               </p>
-              <div className="text-xs font-montserrat">
-                <p><strong>Usuário:</strong> admin</p>
-                <p><strong>Senha:</strong> admin</p>
-              </div>
             </div>
 
             <div className="mt-6 text-center">
