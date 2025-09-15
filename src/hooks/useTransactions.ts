@@ -78,7 +78,7 @@ export const useTransactions = () => {
       setTransactions(prev => [newTransaction, ...prev]);
 
       toast({
-        title: transaction.type === "gain" ? "Lucro adicionado!" : "Despesa registrada!",
+        title: transaction.type === "gain" ? "Valor adicionado!" : "Despesa registrada!",
         description: `${transaction.type === "gain" ? "Ganho" : "Gasto"} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transaction.value)} ${transaction.company ? `(${transaction.company})` : ""} ${transaction.category ? `- ${transaction.category}` : ""}`,
       });
 

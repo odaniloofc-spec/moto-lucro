@@ -179,7 +179,7 @@ const Index = () => {
       {/* Ações Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <QuickAction
-          title="Adicionar Lucro"
+          title="Adicionar Valor"
           type="gain"
           icon="🏍️"
           onAdd={(value, category, company) => handleAddTransaction(value, "gain", category, company)}

@@ -135,7 +135,7 @@ export const MonthlyChart = ({ transactions, dateFilter = "month", startDate, en
               <span className="text-finance-expense">💸 Saídas:</span> {formatCurrency(payload[1]?.value || 0)}
             </p>
             <p className="text-sm font-montserrat font-bold">
-              <span className="text-finance-profit">🚀 Lucro:</span> {formatCurrency(payload[2]?.value || 0)}
+              <span className="text-finance-profit">🚀 Valor:</span> {formatCurrency(payload[2]?.value || 0)}
             </p>
           </div>
         </div>
@@ -234,7 +234,7 @@ export const MonthlyChart = ({ transactions, dateFilter = "month", startDate, en
             </p>
           </div>
           <div className="text-center p-4 bg-finance-profit/10 border border-finance-profit/20 rounded-lg shadow-neon">
-            <p className="text-sm text-muted-foreground font-montserrat">Lucro do Mês</p>
+            <p className="text-sm text-muted-foreground font-montserrat">Valor do Mês</p>
             <p className="text-xl font-orbitron font-bold text-finance-profit">
               {formatCurrency(chartData.reduce((sum, day) => sum + day.lucro, 0))}
             </p>

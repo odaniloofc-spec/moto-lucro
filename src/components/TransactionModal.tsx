@@ -201,7 +201,7 @@ export const TransactionModal = ({ isOpen, onClose, transactions, type, title }:
                     </div>
                     <div>
                       <p className="font-montserrat text-foreground font-medium">
-                        {transaction.type === "gain" ? "Lucro" : transaction.category}
+                        {transaction.type === "gain" ? "Valor" : transaction.category}
                         {transaction.company && (
                           <span className="text-muted-foreground ml-2">
                             ({transaction.company})

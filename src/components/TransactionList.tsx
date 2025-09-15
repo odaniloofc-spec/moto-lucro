@@ -260,7 +260,7 @@ export const TransactionList = ({
               className="flex items-center gap-2"
             >
               <span>💰</span>
-              Lucros
+              Valores
             </Button>
             <Button
               variant={typeFilter === "expense" ? "default" : "outline"}
@@ -353,7 +353,7 @@ export const TransactionList = ({
                       </span>
                       <div>
                         <p className="font-montserrat text-foreground">
-                          {transaction.type === "gain" ? "Lucro" : transaction.category}
+                          {transaction.type === "gain" ? "Valor" : transaction.category}
                           {transaction.company && ` (${transaction.company})`}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -420,7 +420,7 @@ export const TransactionList = ({
               </div>
               
               <div className="text-center p-3 bg-finance-profit/10 border border-finance-profit/20 rounded-lg shadow-neon">
-                <p className="text-sm text-muted-foreground font-montserrat">Lucro</p>
+                <p className="text-sm text-muted-foreground font-montserrat">Valor</p>
                 <p className="text-lg font-orbitron font-bold text-finance-profit">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getTotals().total.valor)}
                 </p>
