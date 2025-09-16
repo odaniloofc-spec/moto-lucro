@@ -424,7 +424,7 @@ const Signup = () => {
         <div className="text-center mt-6">
           <Button
             variant="ghost"
-            onClick={() => navigate("/landing")}
+            onClick={() => navigate("/")}
             className="text-muted-foreground hover:text-primary transition-smooth"
           >
             ← Voltar para a página inicial
