@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
@@ -9,14 +9,18 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    console.log("ProtectedRoute - user:", user, "loading:", loading);
+    console.log("ProtectedRoute - user:", user, "loading:", loading, "pathname:", location.pathname);
+    
     if (!loading && !user) {
       console.log("Usuário não autenticado, redirecionando para login");
-      navigate('/login');
+      // Salvar a rota atual para redirecionar após login
+      const returnTo = location.pathname !== '/dashboard' ? location.pathname : '/dashboard';
+      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, location.pathname]);
 
   if (loading) {
     return (

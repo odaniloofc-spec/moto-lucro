@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
 const Login = () => {
@@ -15,6 +15,8 @@ const Login = () => {
   const { toast } = useToast();
   const { signIn, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || '/dashboard';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +37,8 @@ const Login = () => {
       console.log("Login bem-sucedido, redirecionando...");
       // Pequeno delay para garantir que o estado foi atualizado
       setTimeout(() => {
-        console.log("Navegando para /dashboard");
-        navigate("/dashboard");
+        console.log("Navegando para:", returnTo);
+        navigate(returnTo);
       }, 100);
     } else {
       console.log("Erro no login:", error);

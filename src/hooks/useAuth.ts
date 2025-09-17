@@ -81,6 +81,7 @@ export const useAuth = () => {
           data: {
             name: name,
           },
+          emailRedirectTo: 'https://moto-lucro.vercel.app/dashboard',
         },
       });
 
