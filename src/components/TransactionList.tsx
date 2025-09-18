@@ -179,19 +179,25 @@ export const TransactionList = ({
 
   return (
     <Card className="bg-finance-card rounded-lg border border-border shadow-card">
-      <CardHeader>
-        <div className="space-y-4">
+      <CardHeader className="pb-3">
+        <div className="space-y-3 sm:space-y-4">
+          {/* Título */}
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-orbitron font-bold text-foreground flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
-              Histórico de Transações
+            <CardTitle className="text-base sm:text-lg font-orbitron font-bold text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              <span className="hidden sm:inline">Histórico de Transações</span>
+              <span className="sm:hidden">Transações</span>
             </CardTitle>
-            <div className="flex items-center gap-2">
+          </div>
+
+          {/* Filtros de Data - Mobile: empilhado, Desktop: em linha */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 flex-1">
               <Select value={filter} onValueChange={(value: "all" | "week" | "month" | "custom") => {
                 setFilter(value);
                 onDateFilterChange?.(value);
               }}>
-                <SelectTrigger className="w-32 bg-background/50 border-border text-foreground">
+                <SelectTrigger className="w-full sm:w-32 bg-background/50 border-border text-foreground h-9 sm:h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,29 +207,6 @@ export const TransactionList = ({
                   <SelectItem value="custom">Intervalo</SelectItem>
                 </SelectContent>
               </Select>
-              {filter === "custom" && (
-                <div className="flex items-center gap-2">
-                  <DatePickerComponent
-                    selected={startDate}
-                    onChange={(date) => {
-                      setStartDate(date);
-                      onStartDateChange?.(date);
-                    }}
-                    placeholder="Data inicial"
-                    className="w-36 bg-background/50 border-border text-foreground"
-                  />
-                  <span className="text-muted-foreground text-xs">até</span>
-                  <DatePickerComponent
-                    selected={endDate}
-                    onChange={(date) => {
-                      setEndDate(date);
-                      onEndDateChange?.(date);
-                    }}
-                    placeholder="Data final"
-                    className="w-36 bg-background/50 border-border text-foreground"
-                  />
-                </div>
-              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -234,55 +217,84 @@ export const TransactionList = ({
                   setTypeFilter("all");
                   setSubtypeFilter("all");
                 }}
-                className="h-8 px-3"
+                className="h-9 sm:h-10 px-2 sm:px-3 flex-shrink-0"
               >
-                <X className="w-4 h-4 mr-1" />
-                Limpar
+                <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <span className="hidden sm:inline">Limpar</span>
               </Button>
             </div>
+            
+            {/* Datas personalizadas - sempre em linha separada no mobile */}
+            {filter === "custom" && (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                <DatePickerComponent
+                  selected={startDate}
+                  onChange={(date) => {
+                    setStartDate(date);
+                    onStartDateChange?.(date);
+                  }}
+                  placeholder="Data inicial"
+                  className="w-full sm:w-36 bg-background/50 border-border text-foreground h-9 sm:h-10"
+                />
+                <span className="text-muted-foreground text-xs text-center sm:text-left">até</span>
+                <DatePickerComponent
+                  selected={endDate}
+                  onChange={(date) => {
+                    setEndDate(date);
+                    onEndDateChange?.(date);
+                  }}
+                  placeholder="Data final"
+                  className="w-full sm:w-36 bg-background/50 border-border text-foreground h-9 sm:h-10"
+                />
+              </div>
+            )}
           </div>
 
           {/* Cards de Filtro por Tipo */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             <Button
               variant={typeFilter === "all" ? "default" : "outline"}
               size="sm"
               onClick={() => handleTypeFilter("all")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              <span>📊</span>
-              Todas
+              <span className="text-sm sm:text-base">📊</span>
+              <span className="hidden sm:inline">Todas</span>
+              <span className="sm:hidden">Todas</span>
             </Button>
             <Button
               variant={typeFilter === "gain" ? "default" : "outline"}
               size="sm"
               onClick={() => handleTypeFilter("gain")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              <span>💰</span>
-              Valores
+              <span className="text-sm sm:text-base">💰</span>
+              <span className="hidden sm:inline">Valores</span>
+              <span className="sm:hidden">Valores</span>
             </Button>
             <Button
               variant={typeFilter === "expense" ? "default" : "outline"}
               size="sm"
               onClick={() => handleTypeFilter("expense")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              <span>💸</span>
-              Despesas
+              <span className="text-sm sm:text-base">💸</span>
+              <span className="hidden sm:inline">Despesas</span>
+              <span className="sm:hidden">Despesas</span>
             </Button>
           </div>
 
           {/* Filtro por Subtipo */}
           {typeFilter !== "all" && getSubtypeOptions().length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 sm:gap-2">
               <Button
                 variant={subtypeFilter === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSubtypeFilter("all")}
-                className="text-xs"
+                className="text-xs h-7 sm:h-8 px-2 sm:px-3"
               >
-                Todos os {typeFilter === "gain" ? "apps" : "tipos"}
+                <span className="hidden sm:inline">Todos os {typeFilter === "gain" ? "apps" : "tipos"}</span>
+                <span className="sm:hidden">Todos</span>
               </Button>
               {getSubtypeOptions().map((subtype) => (
                 <Button
@@ -290,7 +302,7 @@ export const TransactionList = ({
                   variant={subtypeFilter === subtype ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSubtypeFilter(subtype)}
-                  className="text-xs"
+                  className="text-xs h-7 sm:h-8 px-2 sm:px-3"
                 >
                   {subtype}
                 </Button>
@@ -300,10 +312,10 @@ export const TransactionList = ({
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="p-4 sm:p-6 pt-0">
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground font-montserrat">
+            <p className="text-muted-foreground font-montserrat text-sm sm:text-base">
               Nenhuma transação encontrada para o período selecionado.
             </p>
           </div>
@@ -312,7 +324,7 @@ export const TransactionList = ({
             {filteredTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex justify-between items-center p-3 bg-background/50 rounded-lg"
+                className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-background/50 rounded-lg gap-2 sm:gap-0"
               >
                 {editingId === transaction.id ? (
                   <div className="flex-1 flex items-center gap-2">
@@ -347,12 +359,12 @@ export const TransactionList = ({
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-base sm:text-lg flex-shrink-0">
                         {transaction.type === "gain" ? "💰" : "💸"}
                       </span>
-                      <div>
-                        <p className="font-montserrat text-foreground">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-montserrat text-foreground text-sm sm:text-base truncate">
                           {transaction.type === "gain" ? "Valor" : transaction.category}
                           {transaction.company && ` (${transaction.company})`}
                         </p>
@@ -361,8 +373,8 @@ export const TransactionList = ({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-orbitron font-bold ${
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
+                      <span className={`font-orbitron font-bold text-sm sm:text-base ${
                         transaction.type === "gain" ? "text-finance-gain" : "text-finance-expense"
                       }`}>
                         {transaction.type === "gain" ? "+" : "-"}
@@ -371,22 +383,24 @@ export const TransactionList = ({
                           currency: 'BRL'
                         }).format(transaction.value)}
                       </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(transaction)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(transaction.id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(transaction)}
+                          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(transaction.id)}
+                          className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )}
