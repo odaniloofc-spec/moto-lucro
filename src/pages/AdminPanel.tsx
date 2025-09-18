@@ -76,7 +76,7 @@ const AdminPanel = () => {
 
   const fetchUsers = async (isRefresh = false) => {
     // Prevenir múltiplas chamadas simultâneas
-    if (loading && !isRefresh) {
+    if ((loading || refreshing) && !isRefresh) {
       console.log('⚠️ Busca já em andamento, ignorando nova chamada');
       return;
     }
@@ -90,17 +90,7 @@ const AdminPanel = () => {
       
       console.log('🔍 Iniciando busca de usuários...', isRefresh ? '(refresh)' : '(inicial)');
       
-      // Tentar primeiro com join (mais eficiente)
-      try {
-        const usersWithStats = await fetchUsersWithStats();
-        console.log('✅ Dados carregados com join:', usersWithStats.length);
-        setUsers(usersWithStats);
-        return;
-      } catch (joinError) {
-        console.warn('⚠️ Join falhou, tentando método alternativo:', joinError);
-      }
-
-      // Método alternativo: buscar usuários e transações separadamente
+      // Método simplificado: buscar apenas usuários primeiro
       const usersData = await fetchUsersSimple();
       
       if (!usersData || usersData.length === 0) {
@@ -111,18 +101,28 @@ const AdminPanel = () => {
 
       console.log('✅ Usuários encontrados:', usersData.length);
 
-      // Processar usuários em lotes para evitar sobrecarga
-      const batchSize = 5;
-      const usersWithStats: User[] = [];
-      
-      for (let i = 0; i < usersData.length; i += batchSize) {
-        const batch = usersData.slice(i, i + batchSize);
-        console.log(`📦 Processando lote ${Math.floor(i/batchSize) + 1}/${Math.ceil(usersData.length/batchSize)}`);
-        
-        const batchResults = await Promise.all(
-          batch.map(async (user) => {
-            console.log(`📊 Processando usuário: ${user.name} (${user.id})`);
-            
+      // Processar usuários com dados básicos primeiro
+      const usersWithBasicStats: User[] = usersData.map(user => ({
+        ...user,
+        transactions_count: 0,
+        total_gains: 0,
+        total_expenses: 0,
+        net_profit: 0,
+        days_active: 0,
+        is_suspended: user.is_suspended || false
+      }));
+
+      // Definir dados básicos primeiro para mostrar na tela
+      setUsers(usersWithBasicStats);
+
+      // Depois buscar transações em background (sem bloquear a UI)
+      setTimeout(async () => {
+        try {
+          console.log('🔄 Buscando transações em background...');
+          
+          const usersWithFullStats: User[] = [];
+          
+          for (const user of usersData) {
             try {
               const transactions = await fetchUserTransactions(user.id);
               
@@ -148,7 +148,7 @@ const AdminPanel = () => {
                 )
               ).size;
 
-              const userStats = {
+              usersWithFullStats.push({
                 ...user,
                 transactions_count: transactions.length,
                 total_gains: totalGains,
@@ -156,19 +156,10 @@ const AdminPanel = () => {
                 net_profit: netProfit,
                 days_active: uniqueDays,
                 is_suspended: user.is_suspended || false
-              };
-
-              console.log(`✅ Estatísticas calculadas para ${user.name}:`, {
-                transactions: userStats.transactions_count,
-                gains: userStats.total_gains,
-                expenses: userStats.total_expenses,
-                days: userStats.days_active
               });
-
-              return userStats;
             } catch (error) {
               console.error(`❌ Erro ao processar usuário ${user.name}:`, error);
-              return {
+              usersWithFullStats.push({
                 ...user,
                 transactions_count: 0,
                 total_gains: 0,
@@ -176,21 +167,17 @@ const AdminPanel = () => {
                 net_profit: 0,
                 days_active: 0,
                 is_suspended: user.is_suspended || false
-              };
+              });
             }
-          })
-        );
-        
-        usersWithStats.push(...batchResults);
-        
-        // Pequena pausa entre lotes para evitar sobrecarga
-        if (i + batchSize < usersData.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
+          }
 
-      console.log('🎯 Usuários processados:', usersWithStats.length);
-      setUsers(usersWithStats);
+          console.log('🎯 Estatísticas completas carregadas:', usersWithFullStats.length);
+          setUsers(usersWithFullStats);
+        } catch (error) {
+          console.error('❌ Erro ao carregar estatísticas:', error);
+        }
+      }, 100);
+
     } catch (error) {
       console.error('❌ Erro geral ao buscar usuários:', error);
       toast({

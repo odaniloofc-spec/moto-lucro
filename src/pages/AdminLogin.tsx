@@ -87,6 +87,7 @@ const AdminLogin = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Digite seu usuário"
                   className="border-primary/30 focus:border-primary"
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -103,6 +104,7 @@ const AdminLogin = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Digite sua senha"
                     className="border-primary/30 focus:border-primary pr-10"
+                    autoComplete="current-password"
                     required
                   />
                   <Button
