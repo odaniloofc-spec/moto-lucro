@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   name TEXT NOT NULL,
   phone TEXT,
   goal_amount DECIMAL(10,2) DEFAULT 300.00,
+  is_suspended BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

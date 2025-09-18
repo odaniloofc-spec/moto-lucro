@@ -8,6 +8,8 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/AdminLogin";
+import AdminPanel from "./pages/AdminPanel";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AuthCallback from "@/components/AuthCallback";
 
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/admin-admin" element={<AdminLogin />} />
+          <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Index />
