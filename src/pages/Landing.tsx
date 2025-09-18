@@ -37,7 +37,7 @@ const Landing = () => {
       name: "MVP Gratuito",
       price: "R$ 0",
       originalPrice: "R$ 19,90",
-      period: "para sempre",
+      period: "14 dias grátis",
       description: "Teste todas as funcionalidades",
       features: [
         "Transações ilimitadas",

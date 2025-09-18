@@ -22,6 +22,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { fetchUsersWithStats, fetchUsersSimple, fetchUserTransactions } from "@/components/AdminDataFetcher";
 
 interface User {
   id: string;
@@ -42,6 +43,7 @@ interface User {
 const AdminPanel = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "suspended">("all");
   const { toast } = useToast();
@@ -72,84 +74,133 @@ const AdminPanel = () => {
     fetchUsers();
   }, [navigate]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (isRefresh = false) => {
+    // Prevenir múltiplas chamadas simultâneas
+    if (loading && !isRefresh) {
+      console.log('⚠️ Busca já em andamento, ignorando nova chamada');
+      return;
+    }
+
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       
-      // Buscar todos os usuários
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+      console.log('🔍 Iniciando busca de usuários...', isRefresh ? '(refresh)' : '(inicial)');
+      
+      // Tentar primeiro com join (mais eficiente)
+      try {
+        const usersWithStats = await fetchUsersWithStats();
+        console.log('✅ Dados carregados com join:', usersWithStats.length);
+        setUsers(usersWithStats);
+        return;
+      } catch (joinError) {
+        console.warn('⚠️ Join falhou, tentando método alternativo:', joinError);
+      }
 
-      if (usersError) throw usersError;
+      // Método alternativo: buscar usuários e transações separadamente
+      const usersData = await fetchUsersSimple();
+      
+      if (!usersData || usersData.length === 0) {
+        console.log('ℹ️ Nenhum usuário encontrado');
+        setUsers([]);
+        return;
+      }
 
-      // Para cada usuário, buscar estatísticas
-      const usersWithStats = await Promise.all(
-        usersData.map(async (user) => {
-          // Buscar transações do usuário
-          const { data: transactions, error: transactionsError } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', user.id);
+      console.log('✅ Usuários encontrados:', usersData.length);
 
-          if (transactionsError) {
-            console.error('Erro ao buscar transações:', transactionsError);
-            return {
-              ...user,
-              transactions_count: 0,
-              total_gains: 0,
-              total_expenses: 0,
-              net_profit: 0,
-              days_active: 0,
-              is_suspended: user.is_suspended || false
-            };
-          }
+      // Processar usuários em lotes para evitar sobrecarga
+      const batchSize = 5;
+      const usersWithStats: User[] = [];
+      
+      for (let i = 0; i < usersData.length; i += batchSize) {
+        const batch = usersData.slice(i, i + batchSize);
+        console.log(`📦 Processando lote ${Math.floor(i/batchSize) + 1}/${Math.ceil(usersData.length/batchSize)}`);
+        
+        const batchResults = await Promise.all(
+          batch.map(async (user) => {
+            console.log(`📊 Processando usuário: ${user.name} (${user.id})`);
+            
+            try {
+              const transactions = await fetchUserTransactions(user.id);
+              
+              // Calcular estatísticas
+              const gains = transactions.filter(t => t.type === 'gain');
+              const expenses = transactions.filter(t => t.type === 'expense');
+              
+              const totalGains = gains.reduce((sum, t) => sum + parseFloat(t.value || 0), 0);
+              const totalExpenses = expenses.reduce((sum, t) => sum + parseFloat(t.value || 0), 0);
+              const netProfit = totalGains - totalExpenses;
 
-          // Calcular estatísticas
-          const gains = transactions.filter(t => t.type === 'gain');
-          const expenses = transactions.filter(t => t.type === 'expense');
-          
-          const totalGains = gains.reduce((sum, t) => sum + t.value, 0);
-          const totalExpenses = expenses.reduce((sum, t) => sum + t.value, 0);
-          const netProfit = totalGains - totalExpenses;
+              // Calcular dias ativos (últimos 30 dias)
+              const thirtyDaysAgo = new Date();
+              thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+              
+              const recentTransactions = transactions.filter(t => 
+                new Date(t.date) >= thirtyDaysAgo
+              );
+              
+              const uniqueDays = new Set(
+                recentTransactions.map(t => 
+                  new Date(t.date).toDateString()
+                )
+              ).size;
 
-          // Calcular dias ativos (últimos 30 dias)
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          
-          const recentTransactions = transactions.filter(t => 
-            new Date(t.date) >= thirtyDaysAgo
-          );
-          
-          const uniqueDays = new Set(
-            recentTransactions.map(t => 
-              new Date(t.date).toDateString()
-            )
-          ).size;
+              const userStats = {
+                ...user,
+                transactions_count: transactions.length,
+                total_gains: totalGains,
+                total_expenses: totalExpenses,
+                net_profit: netProfit,
+                days_active: uniqueDays,
+                is_suspended: user.is_suspended || false
+              };
 
-          return {
-            ...user,
-            transactions_count: transactions.length,
-            total_gains: totalGains,
-            total_expenses: totalExpenses,
-            net_profit: netProfit,
-            days_active: uniqueDays,
-            is_suspended: user.is_suspended || false
-          };
-        })
-      );
+              console.log(`✅ Estatísticas calculadas para ${user.name}:`, {
+                transactions: userStats.transactions_count,
+                gains: userStats.total_gains,
+                expenses: userStats.total_expenses,
+                days: userStats.days_active
+              });
 
+              return userStats;
+            } catch (error) {
+              console.error(`❌ Erro ao processar usuário ${user.name}:`, error);
+              return {
+                ...user,
+                transactions_count: 0,
+                total_gains: 0,
+                total_expenses: 0,
+                net_profit: 0,
+                days_active: 0,
+                is_suspended: user.is_suspended || false
+              };
+            }
+          })
+        );
+        
+        usersWithStats.push(...batchResults);
+        
+        // Pequena pausa entre lotes para evitar sobrecarga
+        if (i + batchSize < usersData.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      console.log('🎯 Usuários processados:', usersWithStats.length);
       setUsers(usersWithStats);
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      console.error('❌ Erro geral ao buscar usuários:', error);
       toast({
         title: "Erro ao carregar usuários",
-        description: "Não foi possível carregar a lista de usuários.",
+        description: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -169,7 +220,7 @@ const AdminPanel = () => {
           : "O usuário foi suspenso com sucesso.",
       });
 
-      fetchUsers(); // Recarregar lista
+      fetchUsers(true); // Recarregar lista (refresh)
     } catch (error) {
       console.error('Erro ao alterar status do usuário:', error);
       toast({
@@ -322,14 +373,14 @@ const AdminPanel = () => {
                   />
                 </div>
               </div>
-              <div className="sm:w-48">
+              <div className="sm:w-56">
                 <Label className="font-montserrat">Status</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-1 mt-2 flex-wrap">
                   <Button
                     variant={filterStatus === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilterStatus("all")}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     Todos
                   </Button>
@@ -337,7 +388,7 @@ const AdminPanel = () => {
                     variant={filterStatus === "active" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilterStatus("active")}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     Ativos
                   </Button>
@@ -345,21 +396,11 @@ const AdminPanel = () => {
                     variant={filterStatus === "suspended" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilterStatus("suspended")}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     Suspensos
                   </Button>
                 </div>
-              </div>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={fetchUsers}
-                  className="border-primary text-primary hover:bg-primary/10"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Atualizar
-                </Button>
               </div>
             </div>
           </CardContent>
@@ -368,9 +409,29 @@ const AdminPanel = () => {
         {/* Users Table */}
         <Card className="border-primary/20">
           <CardHeader>
-            <CardTitle className="font-orbitron text-foreground">
-              Usuários ({filteredUsers.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="font-orbitron text-foreground">
+                Usuários ({filteredUsers.length})
+              </CardTitle>
+              <div className="flex items-center gap-3">
+                {(loading || refreshing) && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mr-2" />
+                    {loading ? 'Carregando...' : 'Atualizando...'}
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchUsers(true)}
+                  disabled={loading || refreshing}
+                  className="border-primary text-primary hover:bg-primary/10 disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Atualizando...' : 'Atualizar'}
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

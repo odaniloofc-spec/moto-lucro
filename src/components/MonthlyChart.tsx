@@ -169,37 +169,40 @@ export const MonthlyChart = ({ transactions, dateFilter = "month", startDate, en
 
   return (
     <Card className="bg-finance-card rounded-lg border border-border shadow-card">
-      <CardHeader>
-        <CardTitle className="text-lg font-orbitron font-bold text-foreground flex items-center gap-2">
-          <span className="text-xl">📊</span>
-          Evolução Mensal - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg font-orbitron font-bold text-foreground flex items-center gap-2">
+          <span className="text-lg sm:text-xl">📊</span>
+          <span className="hidden sm:inline">Evolução Mensal - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
+          <span className="sm:hidden">Evolução Mensal</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-80 w-full">
+      <CardContent className="p-4 sm:p-6 pt-0">
+        <div className="h-64 sm:h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               margin={{
                 top: 20,
-                right: 30,
-                left: 20,
-                bottom: 60,
+                right: 10,
+                left: 10,
+                bottom: 40,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="day" 
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
+                fontSize={10}
                 angle={-45}
                 textAnchor="end"
-                height={60}
+                height={40}
+                interval="preserveStartEnd"
               />
               <YAxis 
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickFormatter={(value) => `R$ ${value}`}
+                fontSize={10}
+                tickFormatter={(value) => `R$${value}`}
+                width={40}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />

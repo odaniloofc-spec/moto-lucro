@@ -110,25 +110,25 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 space-y-6">
+    <div className="min-h-screen bg-background p-2 sm:p-4 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center pt-4 pb-2">
-        <div className="text-center flex-1">
-          <h1 className="text-4xl font-orbitron font-bold text-foreground mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center pt-2 sm:pt-4 pb-2 gap-4">
+        <div className="text-center sm:text-left flex-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-orbitron font-bold text-foreground mb-1 sm:mb-2">
             MOTO<span className="text-primary">LUCRO</span>
           </h1>
-          <p className="text-muted-foreground font-montserrat">
+          <p className="text-xs sm:text-sm text-muted-foreground font-montserrat">
             Controle financeiro para motoboys
           </p>
         </div>
         
         {/* User Info & Logout */}
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-sm font-montserrat text-foreground">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
+          <div className="text-center sm:text-right">
+            <p className="text-xs sm:text-sm font-montserrat text-foreground">
               Olá, <span className="font-semibold">{user?.user_metadata?.name || user?.email}</span>
             </p>
-            <p className="text-xs text-muted-foreground font-montserrat">
+            <p className="text-xs text-muted-foreground font-montserrat hidden sm:block">
               {user?.email}
             </p>
           </div>
@@ -136,10 +136,10 @@ const Index = () => {
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
           >
             <LogOut className="w-4 h-4" />
-            Sair
+            <span className="hidden sm:inline">Sair</span>
           </Button>
         </div>
       </div>
@@ -153,7 +153,7 @@ const Index = () => {
       />
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <FinanceCard
           title="Ganhos Totais"
           value={totalGains}
@@ -177,7 +177,7 @@ const Index = () => {
       </div>
 
       {/* Ações Rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         <QuickAction
           title="Adicionar Valor"
           type="gain"

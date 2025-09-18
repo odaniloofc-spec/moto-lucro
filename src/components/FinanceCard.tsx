@@ -54,15 +54,15 @@ export const FinanceCard = ({ title, value, type, icon, className, onClick }: Fi
       )}
       onClick={onClick}
     >
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-muted-foreground font-montserrat text-sm uppercase tracking-wide">
+          <span className="text-muted-foreground font-montserrat text-xs sm:text-sm uppercase tracking-wide">
             {title}
           </span>
-          <span className="text-2xl">{icon}</span>
+          <span className="text-xl sm:text-2xl">{icon}</span>
         </div>
         <div className={cn(
-          "text-3xl font-orbitron font-bold tracking-tight",
+          "text-xl sm:text-2xl lg:text-3xl font-orbitron font-bold tracking-tight break-words",
           getColorClass()
         )}>
           {formatCurrency(value)}
