@@ -71,16 +71,37 @@ const AdminPanel = () => {
       return;
     }
 
-    fetchUsers();
+    testSupabaseConnection();
   }, [navigate]);
 
-  const fetchUsers = async (isRefresh = false) => {
-    // Prevenir múltiplas chamadas simultâneas
-    if ((loading || refreshing) && !isRefresh) {
-      console.log('⚠️ Busca já em andamento, ignorando nova chamada');
-      return;
+  const testSupabaseConnection = async () => {
+    try {
+      // Teste básico de conexão
+      const { data, error } = await supabase
+        .from('users')
+        .select('count')
+        .limit(1);
+      
+      if (error) {
+        toast({
+          title: "Erro de Conexão",
+          description: `Não foi possível conectar ao banco de dados: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: "Erro de Conexão",
+        description: "Erro inesperado ao conectar com o banco de dados.",
+        variant: "destructive",
+      });
     }
+  };
 
+  const fetchUsers = async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -88,20 +109,27 @@ const AdminPanel = () => {
         setLoading(true);
       }
       
-      console.log('🔍 Iniciando busca de usuários...', isRefresh ? '(refresh)' : '(inicial)');
-      
-      // Método simplificado: buscar apenas usuários primeiro
-      const usersData = await fetchUsersSimple();
-      
+      // Buscar usuários
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (usersError) {
+        toast({
+          title: "Erro ao buscar usuários",
+          description: `Erro: ${usersError.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!usersData || usersData.length === 0) {
-        console.log('ℹ️ Nenhum usuário encontrado');
         setUsers([]);
         return;
       }
 
-      console.log('✅ Usuários encontrados:', usersData.length);
-
-      // Processar usuários com dados básicos primeiro
+      // Processar usuários com dados básicos
       const usersWithBasicStats: User[] = usersData.map(user => ({
         ...user,
         transactions_count: 0,
@@ -112,14 +140,11 @@ const AdminPanel = () => {
         is_suspended: user.is_suspended || false
       }));
 
-      // Definir dados básicos primeiro para mostrar na tela
       setUsers(usersWithBasicStats);
 
-      // Depois buscar transações em background (sem bloquear a UI)
+      // Buscar transações em background para estatísticas
       setTimeout(async () => {
         try {
-          console.log('🔄 Buscando transações em background...');
-          
           const usersWithFullStats: User[] = [];
           
           for (const user of usersData) {
@@ -158,7 +183,6 @@ const AdminPanel = () => {
                 is_suspended: user.is_suspended || false
               });
             } catch (error) {
-              console.error(`❌ Erro ao processar usuário ${user.name}:`, error);
               usersWithFullStats.push({
                 ...user,
                 transactions_count: 0,
@@ -171,15 +195,13 @@ const AdminPanel = () => {
             }
           }
 
-          console.log('🎯 Estatísticas completas carregadas:', usersWithFullStats.length);
           setUsers(usersWithFullStats);
         } catch (error) {
-          console.error('❌ Erro ao carregar estatísticas:', error);
+          // Silenciar erro de background
         }
       }, 100);
 
     } catch (error) {
-      console.error('❌ Erro geral ao buscar usuários:', error);
       toast({
         title: "Erro ao carregar usuários",
         description: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
